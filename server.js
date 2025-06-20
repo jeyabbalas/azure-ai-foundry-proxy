@@ -87,6 +87,9 @@ app.post('/v1/chat/completions', async (req, res) => {
     // The body from the request from Medical Report Information Extractor
     const requestBody = req.body;
 
+    // Handling inconsistencies between OpenAI's API and Azure's API
+    // Azure's API documentation: https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#request-body
+
     // Azure's endpoint does not support the 'developer' role?
     if (requestBody.messages && Array.isArray(requestBody.messages)) {
         requestBody.messages.forEach(msg => {
@@ -96,10 +99,8 @@ app.post('/v1/chat/completions', async (req, res) => {
         });
     }
 
-    // Azure's endpoint does not support the 'seed' parameter?
-    if (requestBody.seed) {
-        delete requestBody.seed;
-    }
+    // Otherwise `max_tokens` at the Azure endpoint defaults to 16
+    requestBody.max_tokens = requestBody.max_tokens || 5000;
 
     try {
         // Forward the request to the Azure endpoint
